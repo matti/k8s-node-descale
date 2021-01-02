@@ -61,4 +61,3 @@ The Kubernetes credentials lookup order is:
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/kontena/k8s-node-descale
-
