@@ -2,6 +2,9 @@
 
 Drains Kubernetes nodes after they reach the specified best-before age. To be used together with an autoscaler so that the node will get replaced with a fresh one when there is demand.
 
+## TODO:
+ - labelselector, drain only with labels
+
 ## Installation
 
 ### Building manually:
