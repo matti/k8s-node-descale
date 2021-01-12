@@ -55,10 +55,33 @@ module K8sNodeDescale
         terminated_count = 0
         Log.info "Requesting node information .."
 
-        nodes = kube_client.api('v1').resource('nodes').list.sort_by { |node| Time.xmlschema(node.metadata.creationTimestamp) }
-        nodes.delete_if { |node| node.spec&.taints&.map(&:key)&.include?('node-role.kubernetes.io/master') }
+        nodes = kube_client.api('v1').resource('nodes').list.sort_by do |node|
+          Time.xmlschema(node.metadata.creationTimestamp)
+        end
 
-        Log.debug { "Kubernetes API lists %d nodes" % nodes.size }
+        nodes.delete_if do |node|
+          if node.metadata.labels['node-role.kubernetes.io/control-plane'] == 'true'
+            true
+          elsif node.metadata.labels['node-role.kubernetes.io/master'] == 'true'
+            true
+          else
+            false
+          end
+        end
+
+        draining_nodes = []
+        nodes.each do |node|
+          node.spec&.taints&.each do |taint|
+            if taint.key == "node.kubernetes.io/unschedulable" && taint.effect == "NoSchedule"
+              draining_nodes << node
+            end
+          end
+        end
+
+        if draining_nodes.size >= max_nodes
+          pp [:too_many_nodes_draining, draining_nodes.size]
+          next
+        end
 
         nodes.each do |node|
           name = node.metadata&.name
@@ -90,6 +113,8 @@ module K8sNodeDescale
         end
 
         Log.debug { "Round completed .." }
+      rescue Exception => ex
+        Log.debug { "Execption #{ex} #{ex.message}" }
       end
       Log.info "Done"
     end

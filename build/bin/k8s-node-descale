@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+$stdout.sync = true
 
 begin
   # Load bundler in dev environment. Rubygems generates a working binstub for stand-alone.
